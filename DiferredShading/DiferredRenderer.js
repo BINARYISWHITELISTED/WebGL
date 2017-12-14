@@ -23,26 +23,52 @@ function main() {
     return;
   }
 
-  // // Create and bind a frame buffer for holding multiple textures as frames.
-  // var frameBuffer = gl.createFramebuffer();
-  // gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-  //
-  // var tx = [];
-  // tx.push(gl.createTexture());
-  // tx.push(gl.createTexture());
-  // tx.push(gl.createTexture());
-  // tx.push(gl.createTexture());
-  // gl.bindTexture(gl.TEXTURE_2D, tx[0]);
-  // gl.bindTexture(gl.TEXTURE_2D, tx[1]);
-  // gl.bindTexture(gl.TEXTURE_2D, tx[2]);
-  // gl.bindTexture(gl.TEXTURE_2D, tx[3]);
-  //
-  //
-  // // Reserve enough space for the render target textures needed for deferred shading. Position, Normals, TextureColor, and Depth
-  // gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx[0], 0);
-  // gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT1_WEBGL, gl.TEXTURE_2D, tx[1], 0);
-  // gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT2_WEBGL, gl.TEXTURE_2D, tx[2], 0);
-  // gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT3_WEBGL, gl.TEXTURE_2D, tx[3], 0);
+  // Create and bind a frame buffer for holding multiple textures as frames.
+  var frameBuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+  frameBuffer.width = canvas.width;
+  frameBuffer.height = canvas.height;
+
+  var tx = [];
+  tx.push(gl.createTexture());
+  tx.push(gl.createTexture());
+  tx.push(gl.createTexture());
+  tx.push(gl.createTexture());
+  gl.bindTexture(gl.TEXTURE_2D, tx[0]);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, frameBuffer.width, frameBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tx[0], 0);
+  // gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
+  gl.bindTexture(gl.TEXTURE_2D, tx[1]);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, frameBuffer.width, frameBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tx[1], 0);
+  gl.bindTexture(gl.TEXTURE_2D, tx[2]);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, frameBuffer.width, frameBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tx[2], 0);
+  gl.bindTexture(gl.TEXTURE_2D, tx[3]);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, frameBuffer.width, frameBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tx[3], 0);
+
+
+  // Reserve enough space for the render target textures needed for deferred shading. Position, Normals, TextureColor, and Depth
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT0_WEBGL, gl.TEXTURE_2D, tx[0], 0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT1_WEBGL, gl.TEXTURE_2D, tx[1], 0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT2_WEBGL, gl.TEXTURE_2D, tx[2], 0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, extDrawBuffers.COLOR_ATTACHMENT3_WEBGL, gl.TEXTURE_2D, tx[3], 0);
+
+  extDrawBuffers.drawBuffersWEBGL([
+    extDrawBuffers.COLOR_ATTACHMENT0_WEBGL, // gl_FragData[0]
+    extDrawBuffers.COLOR_ATTACHMENT1_WEBGL, // gl_FragData[1]
+    extDrawBuffers.COLOR_ATTACHMENT2_WEBGL, // gl_FragData[2]
+    extDrawBuffers.COLOR_ATTACHMENT3_WEBGL  // gl_FragData[3]
+  ]);
+
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+  // Can't use framebuffer.
+  // See http://www.khronos.org/opengles/sdk/docs/man/xhtml/glCheckFramebufferStatus.xml
+  console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER));
+  console.log(gl.FRAMEBUFFER_INCOMPLETE_ATTATCHMENT);
+  }
+
 
   // TEMP
   // Set up initial shaders for testing
@@ -59,10 +85,20 @@ function main() {
   `;
 
   // FRGMENT SHADER
+  // const fsSource = `
+  //   void main() {
+  //     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  //   }
+  // `;
   const fsSource = `
-    void main() {
-      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    }
+  #extension GL_EXT_draw_buffers : require
+  precision highp float;
+  void main(void) {
+    gl_FragData[0] = vec4(0.25);
+    gl_FragData[1] = vec4(0.5);
+    gl_FragData[2] = vec4(0.75);
+    gl_FragData[3] = vec4(1.0);
+  }
   `;
 
   // Compile and link shader program
