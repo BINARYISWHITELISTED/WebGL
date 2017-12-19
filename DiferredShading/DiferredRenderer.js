@@ -120,6 +120,51 @@ function main() {
 
   drawScene(gl, programInfo, buffers);
 
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  // TEMP
+  // Set up initial shaders for testing
+  // VERTEX SHADER
+  const vsSource2 = `
+    attribute vec4 aVertexPosition;
+
+    uniform mat4 uModelViewMatrix;
+    uniform mat4 uProjectionMatrix;
+
+    void main() {
+      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+    }
+  `;
+
+  // FRGMENT SHADER
+  // const fsSource = `
+  //   void main() {
+  //     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  //   }
+  // `;
+  const fsSource2 = `
+  precision highp float;
+  void main(void) {
+    gl_FragColor = vec4(gl_FragData[0]);
+  }
+  `;
+
+  // Compile and link shader program
+  const shaderProgram2 = initShaders(gl, vsSource2, fsSource2);
+
+  // Data structure for holing refrences to shader atrributes and uniforms
+  const programInfo2 = {
+    program: shaderProgram2,
+    attribLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+    },
+  }
+
+  drawScene(gl, programInfo2, buffers);
 }
 
 // Create a shader program from vertex and fragment shader source.
